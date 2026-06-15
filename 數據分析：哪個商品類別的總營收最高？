@@ -1,0 +1,52 @@
+import pandas as pd
+
+print("正在讀取並分析銷售資料...")
+
+try:
+    # 1. 讀取 Excel，先不管欄位名稱是什麼
+    try:
+        df = pd.read_excel("sales_data.xlsx", sheet_name="工作表1", header=1)
+    except Exception:
+        df = pd.read_excel("sales_data.xlsx", sheet_name="Sheet1", header=1)
+
+    # 2. 用「第幾欄」的位置，強制把我們要的欄位命名好，管他 Excel 寫什麼！
+    # 欄位順序：0:日期, 1:編號, 2:名稱, 3:類別, 4:單價, 5:數量
+    df.columns.values[3] = "商品類別"
+    df.columns.values[4] = "單價"
+    df.columns.values[5] = "數量"
+
+    # 3. 強力清理資料：把不是數字的文字行（包含重複貼上的標題、空白）通通濾掉
+    df = df[pd.to_numeric(df["數量"], errors="coerce").notnull()]
+    df = df[pd.to_numeric(df["單價"], errors="coerce").notnull()]
+
+    # 4. 強制轉成整數並計算營收
+    df["單價"] = df["單價"].astype(float).astype(int)
+    df["數量"] = df["數量"].astype(float).astype(int)
+    df["營收"] = df["單價"] * df["數量"]
+
+    # 5. 計算各類別總營收
+    category_revenue = (
+        df.groupby("商品類別")["營收"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+
+    print("\n" + "="*15 + " 第一季各類別總營收 (1月~3月) " + "="*15)
+    print(category_revenue)
+
+    # 6. 輸出最終結果
+    best_category = category_revenue.idxmax()
+    best_revenue = category_revenue.max()
+    total_all_revenue = df["營收"].sum()
+
+    print("\n" + "="*18 + " 最終第一季分析結果 " + "="*18)
+    print(f"🥇 最賺錢的商品類別：{best_category}")
+    print(f"💰 該類別累積總營收：${best_revenue:,}")
+    print(f"📊 全公司前三月總營收：${total_all_revenue:,}")
+    print("="*55)
+
+except Exception as e:
+    print(f"\n❌ 程式執行失敗，請檢查以下錯誤原因：\n{e}")
+
+print("\n[ 檢查原始資料總行數 ]")
+print(f"Excel 裡面總共有 {len(df)} 筆訂單資料！")
