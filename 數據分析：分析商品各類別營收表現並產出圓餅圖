@@ -1,0 +1,22 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 1. 讀取資料
+df = pd.read_excel("sales_data.xlsx")
+
+# 2. 計算每樣商品的銷售額 (單價 x 數量)，並加總算出「總營業額」
+df["銷售額"] = df["單價"] * df["數量"]
+total_sales = df["銷售額"].sum()
+print(f"💰 這三個月的總營業額為：${total_sales:,.0f} 元")
+
+# 3. 按照「商品類別」來統計各自賺了多少錢
+category_revenue = df.groupby("商品類別")["銷售額"].sum()
+print("\n📦 各商品類別的營收表現：")
+print(category_revenue)
+
+# 4. 畫一張簡單的圓餅圖，看誰貢獻最多（設定中文字型防止亂碼）
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'Arial Unicode MS'] 
+category_revenue.plot(kind='pie', autopct='%1.1f%%', startangle=90)
+plt.title("各商品類別營收佔比")
+plt.ylabel("") # 隱藏左邊的標籤，讓圖表更乾淨
+plt.show()
